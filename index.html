@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Olinda Graphics Terminal</title>
+  </head>
+  <body>
+    <div id="app">
+      <header id="titlebar">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span id="title">olinda — zsh</span>
+        <span id="hint"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> commands</span>
+        <button id="auto-toggle" type="button" data-on="true" title="Auto-run read-only commands as you type and preview the result">⚡ Auto-run</button>
+        <button id="man-toggle" type="button" data-on="true" title="Show the manual of the command at the prompt">📖 Man</button>
+        <span id="status" data-state="connecting">connecting…</span>
+      </header>
+      <div id="body">
+        <div id="terminal"></div>
+        <aside id="manpanel" data-open="false" aria-label="Command manual">
+          <header class="man-header">
+            <span class="man-title">Manual</span>
+            <button class="man-close" type="button" title="Hide manual">×</button>
+          </header>
+          <div class="man-body">
+            <pre class="man-content">Type a command at the prompt to see its manual.</pre>
+          </div>
+        </aside>
+      </div>
+      <section id="preview" data-open="false" aria-label="Auto-run preview">
+        <header class="preview-header">
+          <span class="preview-label">⚡ preview</span>
+          <span class="preview-cmd"></span>
+          <span class="preview-meta"></span>
+          <button class="preview-close" type="button" title="Hide auto-run preview">×</button>
+        </header>
+        <pre class="preview-output"></pre>
+      </section>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
