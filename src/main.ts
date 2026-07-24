@@ -296,6 +296,17 @@ term.onWriteParsed(() => {
   schedulePreview();
 });
 
+// Pressing Enter submits the line to the real shell (or continues a multi-line
+// command), so the typed-command preview is stale — clear it. Enter reaches the
+// PTY as a carriage return; this is a second onData listener alongside the one
+// that forwards input, so forwarding is untouched.
+term.onData((data) => {
+  if (data.includes("\r")) {
+    lastPreviewLine = null;
+    preview.clear();
+  }
+});
+
 // Capture phase + stopPropagation so Ctrl+Shift+P is swallowed before it reaches
 // xterm's key handler (and thus the PTY). preventDefault keeps the browser from
 // acting on it too. Ctrl+Shift+P is unbound in zsh's line editor, so nothing in

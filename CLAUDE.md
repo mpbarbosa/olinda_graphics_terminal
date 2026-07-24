@@ -59,6 +59,7 @@ As you type, a syntactically-valid **read-only** command is executed in a throwa
 - **The classifier is a denylist-of-operators + allowlist-of-commands, on purpose.** Do not loosen `UNSAFE_META` or add write-capable commands (`sed`/`awk` can execute or write, so they're excluded) without understanding that anything that passes gets auto-executed as the user types. Verified: a typed `rm -f <file>` leaves the file intact.
 - `src/preview.ts` (`createPreviewPanel`) owns the bottom panel: race-guarded fetch, renders per status (`ok`/`unsafe`/`invalid`), opens/collapses (with `onLayoutChange` → refit).
 - `src/main.ts` extracts the **typed line** with `typedLineAtPrompt()`: the cursor-row text between the prompt marker and **`buffer.active.cursorX`**. Stopping at the cursor column excludes zsh-autosuggestions (drawn after the cursor), so we never preview text the user didn't type. Debounced 550ms, driven by the same `onWriteParsed` handler as the man panel.
+- **Pressing Enter clears the preview.** A dedicated `term.onData` listener watches for a carriage return (`\r`) — how Enter reaches the PTY — and calls `preview.clear()` (collapse, empty, and bump the request sequence so an in-flight fetch can't re-render). Once the line is submitted, the throwaway preview is stale (the real output is now in the terminal); it re-opens when the next command is typed. This is a *second* `onData` listener, separate from the one that forwards input.
 
 ### Wire protocol (`shared/protocol.ts`)
 

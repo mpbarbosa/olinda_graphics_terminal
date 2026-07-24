@@ -15,6 +15,8 @@ export interface PreviewResult {
 export interface PreviewPanel {
   /** Preview `cmd` (the in-progress command line). */
   update(cmd: string): void;
+  /** Collapse and empty the panel (e.g. the line was submitted with Enter). */
+  clear(): void;
   setEnabled(on: boolean): void;
   readonly enabled: boolean;
   readonly current: string | null;
@@ -111,6 +113,15 @@ export function createPreviewPanel(opts: PreviewOptions): PreviewPanel {
       });
   }
 
+  function clear(): void {
+    current = null;
+    requestSeq++; // invalidate any in-flight run() so it can't re-render
+    setOpen(false);
+    cmdEl.textContent = "";
+    metaEl.textContent = "";
+    outEl.textContent = "";
+  }
+
   function setEnabled(on: boolean): void {
     if (on === enabled) return;
     enabled = on;
@@ -128,6 +139,7 @@ export function createPreviewPanel(opts: PreviewOptions): PreviewPanel {
 
   return {
     update,
+    clear,
     setEnabled,
     get enabled() {
       return enabled;
