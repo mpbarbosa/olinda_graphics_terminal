@@ -5,6 +5,8 @@
 export interface ManViewer {
   /** Fetch + display the manual for `cmd`, opening the panel if enabled. */
   show(cmd: string): void;
+  /** Collapse the panel (e.g. the current command has no manual). */
+  close(): void;
   /** Enable/disable the whole feature; disabling collapses the panel. */
   setEnabled(on: boolean): void;
   readonly enabled: boolean;
@@ -38,40 +40,55 @@ export function createManViewer(opts: ManOptions): ManViewer {
     opts.onLayoutChange?.();
   }
 
-  function render(cmd: string, body: string, isError: boolean): void {
-    titleEl.textContent = isError ? cmd : `man ${cmd}`;
+  function render(cmd: string, body: string): void {
+    titleEl.textContent = `man ${cmd}`;
     contentEl.textContent = body;
-    contentEl.classList.toggle("is-error", isError);
     contentEl.parentElement!.scrollTop = 0;
   }
 
   function show(cmd: string): void {
     if (!enabled || cmd === current) return;
     current = cmd;
-    setOpen(true);
 
     const cached = cache.get(cmd);
     if (cached) {
-      render(cmd, cached.text, !cached.ok);
+      // A command with no manual collapses the panel rather than showing an
+      // error page.
+      if (cached.ok) {
+        setOpen(true);
+        render(cmd, cached.text);
+      } else {
+        setOpen(false);
+      }
       return;
     }
 
     const seq = ++requestSeq;
-    titleEl.textContent = `man ${cmd}`;
-    contentEl.classList.remove("is-error");
-    contentEl.textContent = "Loading…";
+    // If the panel is already open (showing a previous command), show a loading
+    // state in place. If it's closed, stay closed until we confirm a manual
+    // exists — so commands without one never flash the panel open.
+    if (panel.dataset.open === "true") {
+      titleEl.textContent = `man ${cmd}`;
+      contentEl.textContent = "Loading…";
+    }
 
     opts
       .fetchMan(cmd)
       .then((text) => {
         cache.set(cmd, { ok: true, text });
-        if (seq === requestSeq) render(cmd, text, false);
+        if (seq !== requestSeq) return;
+        setOpen(true);
+        render(cmd, text);
       })
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : `No manual entry for ${cmd}`;
-        cache.set(cmd, { ok: false, text: msg });
-        if (seq === requestSeq) render(cmd, msg, true);
+      .catch(() => {
+        cache.set(cmd, { ok: false, text: "" });
+        if (seq === requestSeq) setOpen(false);
       });
+  }
+
+  function close(): void {
+    current = null;
+    setOpen(false);
   }
 
   function setEnabled(on: boolean): void {
@@ -92,6 +109,7 @@ export function createManViewer(opts: ManOptions): ManViewer {
 
   return {
     show,
+    close,
     setEnabled,
     get enabled() {
       return enabled;

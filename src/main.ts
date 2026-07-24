@@ -187,20 +187,30 @@ manToggle.addEventListener("click", () => {
   term.focus();
 });
 
-// Pull the command name from the row the cursor sits on. The prompt ends in one
-// of a few common markers (❯ ➜ % $ # >); we take the first token after the last
-// such marker. Gated on the token being a known PATH command so partial typing
-// ("gr") and non-commands ("./x") don't trigger fetches.
-const PROMPT_RE = /[❯➜»%$#>]\s+(\S+)/g;
+// The command name is the first token the user has typed on the prompt line. A
+// prompt line begins (after any leading whitespace) with a marker: ❯ ➜ » % $ # >.
+// We walk UP from the cursor row to find it, so multi-line commands (for/while/if,
+// whose cursor sits on a continuation line like `do`/`done`) still resolve to
+// their leading keyword rather than to nothing.
+//   - a token typed on the prompt line -> that token ("for", "grep")
+//   - prompt reached, nothing typed     -> "" (empty)
+//   - no prompt line found nearby       -> null
+// On the cursor's own row we only read up to the cursor column, so text after
+// the cursor (zsh-autosuggestions) is not mistaken for what the user typed.
+const PROMPT_MARK_RE = /^\s*[❯➜»%$#>]\s/;
 function commandAtPrompt(): string | null {
   const buf = term.buffer.active;
-  const line = buf.getLine(buf.baseY + buf.cursorY);
-  const text = line?.translateToString(true) ?? "";
-  let match: RegExpExecArray | null;
-  let last: string | null = null;
-  PROMPT_RE.lastIndex = 0;
-  while ((match = PROMPT_RE.exec(text)) !== null) last = match[1];
-  return last;
+  const cursorRow = buf.baseY + buf.cursorY;
+  for (let row = cursorRow; row >= Math.max(0, cursorRow - 100); row--) {
+    const text = buf.getLine(row)?.translateToString(true) ?? "";
+    const mark = PROMPT_MARK_RE.exec(text);
+    if (!mark) continue; // continuation line — keep walking up
+    const inputStart = mark[0].length;
+    const end = row === cursorRow ? buf.cursorX : text.length;
+    const region = text.slice(inputStart, Math.max(inputStart, end));
+    return region.trim().split(/\s+/)[0] ?? "";
+  }
+  return null;
 }
 
 let lastManCommand: string | null = null;
@@ -210,9 +220,15 @@ function scheduleManDetect(): void {
   window.clearTimeout(manDetectTimer);
   manDetectTimer = window.setTimeout(() => {
     const cmd = commandAtPrompt();
-    if (!cmd || cmd === lastManCommand) return;
-    if (commandSet && !commandSet.has(cmd)) return; // not a real command
+    if (cmd === lastManCommand) return;
     lastManCommand = cmd;
+    // No command, or one that isn't a real PATH executable (a shell keyword like
+    // `for`, a builtin, a partial word) — collapse the panel; there's no manual
+    // to show. Otherwise show(); it also collapses if `man` has no entry.
+    if (!cmd || (commandSet && !commandSet.has(cmd))) {
+      man.close();
+      return;
+    }
     man.show(cmd);
   }, 300);
 }
