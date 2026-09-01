@@ -1,0 +1,373 @@
+:root {
+  --bg: #16161e;
+  --titlebar: #1f1f2e;
+  --fg: #c0caf5;
+  --muted: #565f89;
+  --green: #9ece6a;
+  --yellow: #e0af68;
+  --red: #f7768e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #0d0d14;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 12px;
+  gap: 0;
+}
+
+#titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  background: var(--titlebar);
+  border-radius: 10px 10px 0 0;
+  color: var(--fg);
+  font-size: 13px;
+  user-select: none;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.dot.red {
+  background: var(--red);
+}
+.dot.yellow {
+  background: var(--yellow);
+}
+.dot.green {
+  background: var(--green);
+}
+
+#title {
+  margin-left: 8px;
+  color: var(--muted);
+}
+
+#status {
+  margin-left: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+#status[data-state="connected"] {
+  color: var(--green);
+}
+#status[data-state="disconnected"],
+#status[data-state="exited"] {
+  color: var(--red);
+}
+
+#man-toggle,
+#auto-toggle {
+  font: inherit;
+  font-size: 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid #3b3b52;
+  border-radius: 6px;
+  padding: 2px 9px;
+  cursor: pointer;
+}
+#auto-toggle {
+  margin-left: auto;
+}
+#man-toggle {
+  margin-left: 8px;
+}
+#man-toggle[data-on="true"],
+#auto-toggle[data-on="true"] {
+  color: var(--fg);
+  border-color: var(--green);
+}
+#man-toggle:hover,
+#auto-toggle:hover {
+  background: #2a2a3d;
+}
+
+/* --- Auto-run preview panel (bottom strip) --- */
+#preview {
+  flex: none;
+  height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  margin-top: 0;
+  background: #101019;
+  border: 1px solid transparent;
+  border-radius: 0 0 10px 10px;
+}
+#preview[data-open="true"] {
+  height: clamp(140px, 30vh, 340px);
+  margin-top: 8px;
+  border-color: #2f334d;
+  border-radius: 10px;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px 7px 12px;
+  border-bottom: 1px solid #2f334d;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.preview-label {
+  color: var(--yellow);
+  font-weight: 600;
+}
+.preview-cmd {
+  color: var(--fg);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preview-meta {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preview-meta[data-kind="ok"] {
+  color: var(--green);
+}
+.preview-meta[data-kind="warn"] {
+  color: var(--yellow);
+}
+.preview-close {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.preview-close:hover {
+  color: var(--red);
+}
+
+.preview-output {
+  flex: 1;
+  margin: 0;
+  padding: 10px 14px;
+  overflow: auto;
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg);
+  white-space: pre;
+}
+.preview-output.is-muted {
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
+/* Body split: terminal on the left, manual panel on the right. */
+#body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  background: var(--bg);
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+}
+
+#terminal {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px 4px 8px 10px;
+}
+
+#manpanel {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #12121b;
+  border-left: 1px solid transparent;
+}
+#manpanel[data-open="true"] {
+  width: clamp(340px, 42%, 640px);
+  border-left-color: #2f334d;
+}
+
+.man-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 14px;
+  border-bottom: 1px solid #2f334d;
+  color: var(--fg);
+  font-size: 13px;
+}
+.man-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.man-close {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.man-close:hover {
+  color: var(--red);
+}
+
+.man-body {
+  flex: 1;
+  overflow: auto;
+}
+.man-content {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg);
+  white-space: pre;
+}
+.man-content.is-error {
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
+/* xterm fills its container */
+.xterm {
+  height: 100%;
+}
+
+#hint {
+  margin-left: 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+#hint kbd {
+  font: inherit;
+  color: var(--fg);
+  background: #2a2a3d;
+  border: 1px solid #3b3b52;
+  border-radius: 4px;
+  padding: 0 5px;
+}
+
+/* --- Command palette --- */
+.palette {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 12vh;
+  background: rgba(8, 8, 14, 0.55);
+  backdrop-filter: blur(1px);
+}
+.palette[hidden] {
+  display: none;
+}
+
+.palette-box {
+  width: min(680px, 92vw);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: #1a1b28;
+  border: 1px solid #2f334d;
+  border-radius: 12px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.palette-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 15px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #2f334d;
+}
+.palette-input::placeholder {
+  color: var(--muted);
+}
+
+.palette-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.palette-item {
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: var(--fg);
+  font-size: 13.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.palette-item.is-active {
+  background: #2d3350;
+  color: #fff;
+}
+
+.palette-empty {
+  padding: 14px 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.palette-footer {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 8px 14px;
+  border-top: 1px solid #2f334d;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+.palette-footer kbd {
+  font: inherit;
+  background: #2a2a3d;
+  border: 1px solid #3b3b52;
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-right: 2px;
+  color: var(--fg);
+}
+.palette-count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
